@@ -1,10 +1,17 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next",
+    "dev": "yarn relay && next",
     "build": "next build",
     "start": "next start",
-    "relay": "relay-compiler --src ./src --schema ./src/data/schema.graphql --language typescript"
+    "relay": "yarn relay:schema && yarn relay:compile",
+    "relay:compile": "relay-compiler --src ./src --schema ./src/data/schema.graphql --language typescript",
+    "relay:schema": "get-graphql-schema http://localhost:4000/graphql > ./src/data/schema.graphql"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
   },
   "dependencies": {
     "@chakra-ui/icons": "^1.0.5",
@@ -12,22 +19,25 @@
     "@chakra-ui/theme-tools": "1.1.2",
     "@emotion/react": "11.1.5",
     "@emotion/styled": "11.1.5",
-    "@types/yup": "^0.29.13",
     "formik": "^2.2.9",
     "framer-motion": "^4.0.3",
+    "graphql": "^15.6.1",
     "next": "latest",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-relay": "^12.0.0",
-    "relay-compiler-language-typescript": "^14.2.1",
-    "relay-runtime": "^12.0.0",
     "yup": "^0.32.9"
   },
   "devDependencies": {
     "@types/node": "^14.6.0",
-    "@types/react": "^17.0.3",
+    "@types/react": "^17.0.30",
     "@types/react-dom": "^17.0.3",
+    "@types/yup": "^0.29.13",
+    "babel-plugin-macros": "^3.1.0",
+    "babel-plugin-relay": "^12.0.0",
+    "react-relay": "^12.0.0",
     "relay-compiler": "^12.0.0",
+    "relay-compiler-language-typescript": "^14.2.1",
+    "relay-runtime": "^12.0.0",
     "typescript": "4.3.2"
   }
 }

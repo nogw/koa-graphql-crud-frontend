@@ -5,43 +5,41 @@ import {
   Button,
   InputGroup,
   InputRightElement,
-  Text
-} from "@chakra-ui/react"
+  Text,
+  Box,
+  Link,
+  useToast
+} from "@chakra-ui/react";
 
-import { Box, Link } from "@chakra-ui/layout";
-import { useToast } from '@chakra-ui/toast'
 import { useState } from "react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import * as NextLink  from 'next/link'
-import { useFormik, FormikProvider } from 'formik'
+import * as NextLink  from 'next/link';
+import { useFormik, FormikProvider } from 'formik';
 import { useMutation } from 'react-relay';
 import * as yup from 'yup';
+import { UserMutation } from "../mutations/UserMutation";
+import { UserMutation as UserMutationT, UserMutationResponse } from "../mutations/__generated__/UserMutation.graphql";
+import { useRouter } from "next/router";
 
 type Values = {
-  name: string,
-  email: string,
-  password: string,
-  passwordConfirm: string
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
 }
 
 export const FormRegistration = () => {
-  const [show, setShow] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const handleClick = () => setShow(!show)
   const toast = useToast()
+  const Router = useRouter()
+
+  const [commit] = useMutation<UserMutationT>(UserMutation)
 
   const onSubmit = (values: Values) => {
-    setIsLoading(true)
-    setTimeout(() => { 
-      setIsLoading(false) 
-      toast({
-        title: "Verificado com sucesso.",
-        status: "success",
-        variant: "top-accent",
-        duration: 1000,
-        isClosable: true,
-      })
-    }, 1000);
+    // setIsLoading(true)
+    console.log(process.env.GRAPHQL_URI)
 
     const config = {
       variables: {
@@ -51,18 +49,35 @@ export const FormRegistration = () => {
           password: values.password,
         }
       },
-      onCompleted(data) {
-        console.log(data)
-        setIsLoading(false) 
-        toast({
-          title: "Verificado com sucesso.",
-          status: "success",
-          variant: "top-accent",
-          duration: 1000,
-          isClosable: true,
-        })
+      onCompleted({ userCreateMutation }: UserMutationResponse) {
+        if (userCreateMutation?.error) {
+          toast({
+            title: userCreateMutation?.error,
+            status: "error",
+            variant: "top-accent",
+            duration: 1000,
+            isClosable: true,
+          })
+          return
+        }
+
+        if (userCreateMutation.token) {
+          console.log(userCreateMutation)
+          setIsLoading(false) 
+          toast({
+            title: "Conta criada com sucesso.",
+            status: "success",
+            variant: "top-accent",
+            duration: 1000,
+            isClosable: true,
+          })
+        }
+
+        Router.push("/profile")
       }
     }
+
+    commit(config)
   }
 
   const formik = useFormik<Values>({
@@ -72,37 +87,49 @@ export const FormRegistration = () => {
       password: "",
       passwordConfirm: ""
     },
-    validateOnMount: true,
-    validationSchema: yup.object().shape({
-      name: yup.string().email().required("Email is required"),
-      email: yup.string().required("Email is required"),
-      password: yup.string().required("Email is required"),
-      passwordConfirm: yup.string().required("Email is required"),
-    }),
+      validateOnMount: true,
+      validationSchema: yup.object().shape({
+        name: yup.string().required("Name is required"),
+        email: yup.string().email().required("Email is required"),
+        password: yup.string().required("Password is required"),
+        passwordConfirm: yup.string().oneOf([yup.ref('password'), null], "Passwords must match").required("Password Confirm is required")
+      }),
     onSubmit,
   })
+
+  const { handleSubmit, handleChange, isValid, values } = formik;
+  const isSubmitDisabled = !isValid;
 
   return (
     <FormikProvider value={formik}>
       <FormControl isRequired>
         <FormLabel>Name</FormLabel>
-        <Input type="name" name="name"/>
+        <Input 
+          type="text" 
+          name="name"
+          onChange={handleChange}
+        />
       </FormControl>
       <FormControl isRequired>
         <FormLabel>Email address</FormLabel>
-        <Input type="email" name="email"/>
+        <Input 
+          type="text" 
+          name="email"
+          onChange={handleChange}
+        />
       </FormControl>
       <FormControl isRequired>
         <FormLabel>Password</FormLabel>
           <InputGroup>
             <Input
               pr="2.5rem"
-              type={show ? "text" : "password"}
+              type={showPassword ? "text" : "password"}
               name="password"
+              onChange={handleChange}
             />
             <InputRightElement>
-              <Box h="1.75rem" size="xs" cursor="pointer"onClick={handleClick}>
-                {show ? <ViewIcon color="#e3e3e3"/> : <ViewOffIcon/>}
+              <Box h="1.75rem" size="xs" cursor="pointer"onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <ViewIcon color="#e3e3e3"/> : <ViewOffIcon/>}
               </Box>
             </InputRightElement>
           </InputGroup>
@@ -112,12 +139,13 @@ export const FormRegistration = () => {
           <InputGroup>
             <Input
               pr="2.5rem"
-              type={show ? "text" : "password"}
+              type={showPasswordConfirm ? "text" : "password"}
               name="passwordConfirm"
+              onChange={handleChange}
             />
             <InputRightElement>
-              <Box h="1.75rem" size="xs" cursor="pointer"onClick={handleClick}>
-                {show ? <ViewIcon color="#e3e3e3"/> : <ViewOffIcon/>}
+              <Box h="1.75rem" size="xs" cursor="pointer"onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}>
+                {showPasswordConfirm ? <ViewIcon color="#e3e3e3"/> : <ViewOffIcon/>}
               </Box>
             </InputRightElement>
           </InputGroup>
@@ -126,7 +154,8 @@ export const FormRegistration = () => {
         mt={4} 
         width="100%"
         isLoading={isLoading}
-        // onClick={onSubmit}
+        disabled={isSubmitDisabled}
+        onClick={() => handleSubmit()}
       >
         Sign up
       </Button>

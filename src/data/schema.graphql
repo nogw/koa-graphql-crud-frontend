@@ -1,0 +1,58 @@
+schema {
+  query: UserQuery
+  mutation: UserMutation
+}
+
+"""Exposes a URL that specifies the behaviour of this scalar."""
+directive @specifiedBy(
+  """The URL that specifies the behaviour of this scalar."""
+  url: String!
+) on SCALAR
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+  clientMutationId: String
+}
+
+type CreateUserPayload {
+  token: String
+  error: String
+  clientMutationId: String
+}
+
+"""User type"""
+type User {
+  id: String
+  name: String
+  email: String
+  password: String
+}
+
+input UserLoginInput {
+  email: String!
+  password: String!
+  clientMutationId: String
+}
+
+type UserLoginPayload {
+  token: String
+  error: String
+  clientMutationId: String
+}
+
+"""root of all mutations"""
+type UserMutation {
+  """create user mutation"""
+  userCreateMutation(input: CreateUserInput!): CreateUserPayload
+
+  """login user mutation"""
+  userLoginMutation(input: UserLoginInput!): UserLoginPayload
+}
+
+"""root of all queries"""
+type UserQuery {
+  UserQuery(id: String): User
+}
+

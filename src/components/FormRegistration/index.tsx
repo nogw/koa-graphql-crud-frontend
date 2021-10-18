@@ -17,8 +17,8 @@ import * as NextLink  from 'next/link';
 import { useFormik, FormikProvider } from 'formik';
 import { useMutation } from 'react-relay';
 import * as yup from 'yup';
-import { UserMutation } from "../mutations/UserMutation";
-import { UserMutation as UserMutationT, UserMutationResponse } from "../mutations/__generated__/UserMutation.graphql";
+import { UserRegistrationMutation } from "./UserRegistrationMutation";
+import { UserRegistrationMutation_UserMutation, UserRegistrationMutation_UserMutationResponse } from './__generated__/UserRegistrationMutation_UserMutation.graphql'
 import { useRouter } from "next/router";
 
 type Values = {
@@ -32,14 +32,13 @@ export const FormRegistration = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const toast = useToast()
   const Router = useRouter()
-
-  const [commit] = useMutation<UserMutationT>(UserMutation)
+  const toast = useToast()
+  
+  const [commit] = useMutation<UserRegistrationMutation_UserMutation>(UserRegistrationMutation)
 
   const onSubmit = (values: Values) => {
-    // setIsLoading(true)
-    console.log(process.env.GRAPHQL_URI)
+    setIsLoading(true)
 
     const config = {
       variables: {
@@ -49,7 +48,7 @@ export const FormRegistration = () => {
           password: values.password,
         }
       },
-      onCompleted({ userCreateMutation }: UserMutationResponse) {
+      onCompleted({ userCreateMutation }: UserRegistrationMutation_UserMutationResponse) {
         if (userCreateMutation?.error) {
           toast({
             title: userCreateMutation?.error,
@@ -58,12 +57,14 @@ export const FormRegistration = () => {
             duration: 1000,
             isClosable: true,
           })
+
+          setIsLoading(false)
           return
         }
 
         if (userCreateMutation.token) {
           console.log(userCreateMutation)
-          setIsLoading(false) 
+
           toast({
             title: "Conta criada com sucesso.",
             status: "success",
@@ -71,6 +72,8 @@ export const FormRegistration = () => {
             duration: 1000,
             isClosable: true,
           })
+
+          setIsLoading(false)
         }
 
         Router.push("/profile")
@@ -87,17 +90,17 @@ export const FormRegistration = () => {
       password: "",
       passwordConfirm: ""
     },
-      validateOnMount: true,
-      validationSchema: yup.object().shape({
-        name: yup.string().required("Name is required"),
-        email: yup.string().email().required("Email is required"),
-        password: yup.string().required("Password is required"),
-        passwordConfirm: yup.string().oneOf([yup.ref('password'), null], "Passwords must match").required("Password Confirm is required")
-      }),
+    validateOnMount: true,
+    validationSchema: yup.object().shape({
+      name: yup.string().required("Name is required"),
+      email: yup.string().email().required("Email is required"),
+      password: yup.string().required("Password is required"),
+      passwordConfirm: yup.string().oneOf([yup.ref('password'), null], "Passwords must match").required("Password Confirm is required")
+    }),
     onSubmit,
   })
 
-  const { handleSubmit, handleChange, isValid, values } = formik;
+  const { handleSubmit, handleChange, isValid } = formik;
   const isSubmitDisabled = !isValid;
 
   return (

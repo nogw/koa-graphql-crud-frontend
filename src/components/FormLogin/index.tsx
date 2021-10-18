@@ -22,6 +22,7 @@ import { useMutation } from 'react-relay'
 import Router from 'next/router'
 import { UserLoginMutation } from './UserLoginMutation'
 import { UserLoginMutation_UserMutation, UserLoginMutation_UserMutationResponse } from './__generated__/UserLoginMutation_UserMutation.graphql'
+import { setCookie } from 'nookies'
 
 type Values = {
   email: string;
@@ -61,12 +62,13 @@ export const FormLogin = () => {
         }
 
         if (userLoginMutation?.token) {
-          console.log(userLoginMutation.token)
-
-          setIsLoading(false)
+          setCookie(null, "koa.graphql.user.token", userLoginMutation.token, {
+            maxAge: 30 * 24 * 60 * 60,
+            path: "/"
+          }); setIsLoading(false)
         }
 
-        Router.push("/profile")
+        Router.push("/")
       }
     }
 
@@ -90,7 +92,7 @@ export const FormLogin = () => {
 
   return (
     <FormikProvider value={formik}>
-      <FormControl isRequired>
+      <FormControl id="email" isRequired>
         <FormLabel>Email address</FormLabel>
         <Input 
           type="email" 
@@ -98,7 +100,7 @@ export const FormLogin = () => {
           onChange={handleChange}
         />
       </FormControl>
-      <FormControl isRequired>
+      <FormControl id="password" isRequired>
         <FormLabel>Password</FormLabel>
           <InputGroup>
             <Input

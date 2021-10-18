@@ -1,20 +1,23 @@
 import nookies from 'nookies'
 import { GetServerSideProps } from "next";
 
-function Index() {
-  return (
-    <h1>Index</h1>
-  );
-}
+import { FormRegistration } from '../components/FormRegistration'
+import Layout from '../components/Layout'
+
+const Registration = () => (
+  <Layout>
+    <FormRegistration/>
+  </Layout>
+)
 
 export const getServerSideProps: GetServerSideProps = async ( ctx ) => {
   const { 'koa.graphql.user.token': token } = nookies.get(ctx)
 
-  if (!token) {
+  if (token) {
     return {
       redirect: {
         permanent: false,
-        destination: "/login"
+        destination: "/"
       }
     }
   }
@@ -24,4 +27,4 @@ export const getServerSideProps: GetServerSideProps = async ( ctx ) => {
   }
 }
 
-export default Index;
+export default Registration

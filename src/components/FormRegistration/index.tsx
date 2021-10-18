@@ -20,6 +20,7 @@ import * as yup from 'yup';
 import { UserRegistrationMutation } from "./UserRegistrationMutation";
 import { UserRegistrationMutation_UserMutation, UserRegistrationMutation_UserMutationResponse } from './__generated__/UserRegistrationMutation_UserMutation.graphql'
 import { useRouter } from "next/router";
+import { setCookie } from 'nookies'
 
 type Values = {
   name: string;
@@ -62,7 +63,7 @@ export const FormRegistration = () => {
           return
         }
 
-        if (userCreateMutation.token) {
+        if (userCreateMutation?.token) {
           console.log(userCreateMutation)
 
           toast({
@@ -73,10 +74,13 @@ export const FormRegistration = () => {
             isClosable: true,
           })
 
-          setIsLoading(false)
+          setCookie(null, "koa.graphql.user.token", userCreateMutation.token, {
+            maxAge: 30 * 24 * 60 * 60,
+            path: "/"
+          }); setIsLoading(false)
         }
 
-        Router.push("/profile")
+        Router.push("/")
       }
     }
 
